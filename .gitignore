@@ -1,0 +1,21 @@
+
+# Backend
+backend/.env
+backend/__pycache__/
+backend/instance/
+backend/*.db
+backend/celerybeat-schedule.*
+backend/dump.rdb
+
+# Python
+*.pyc
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+
+# VS Code
+.vscode/
+
+# OS files
+.DS_Store

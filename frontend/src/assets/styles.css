@@ -1,0 +1,106 @@
+:root {
+  --bs-primary: #198754;
+  --bs-primary-rgb: 25, 135, 84;
+  --bs-link-color: #198754;
+  --bs-link-hover-color: #146c43;
+  --primary-color: #198754;
+  --primary-rgb: 25, 135, 84;
+  --border-color: #6c757d;
+  --bs-border-width: 2px;
+  --bs-border-color: #8b949e;
+  --bs-border-color-translucent: rgba(108, 117, 125, 0.45);
+}
+
+body {
+  background-color: #f8f9fa;
+  min-height: 100vh;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+}
+
+.app-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.card {
+  border-radius: 12px;
+  border-width: var(--bs-border-width);
+  border-color: var(--bs-border-color);
+}
+
+.btn {
+  border-radius: 6px;
+}
+
+.form-control,
+.form-select,
+textarea.form-control {
+  border-width: var(--bs-border-width);
+  border-color: var(--bs-border-color);
+}
+
+.form-control:focus,
+.form-select:focus,
+textarea.form-control:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 0.2rem rgba(var(--primary-rgb), 0.25);
+}
+
+.table {
+  --bs-table-border-color: var(--bs-border-color);
+}
+
+.table-bordered > :not(caption) > * > * {
+  border-width: var(--bs-border-width);
+}
+
+.modal-content {
+  border-width: var(--bs-border-width);
+  border-color: var(--bs-border-color);
+}
+
+.list-group-item {
+  border-width: var(--bs-border-width);
+  border-color: var(--bs-border-color);
+}
+
+.nav-tabs .nav-link {
+  border-width: var(--bs-border-width);
+}
+
+.input-group-text {
+  border-width: var(--bs-border-width);
+  border-color: var(--bs-border-color);
+}
+
+.table thead {
+  background-color: #f1f1f1;
+}
+
+.footer-pp {
+  padding: 1rem;
+  margin-top: auto;
+}
+
+.dashboard-sidebar {
+  position: sticky;
+  top: 1rem;
+}
+.dashboard-sidebar .nav-link {
+  text-align: left;
+  border-radius: 0.375rem;
+  margin-bottom: 0.35rem;
+  padding: 0.5rem 0.75rem;
+  color: #495057;
+  border: var(--bs-border-width) solid transparent;
+}
+.dashboard-sidebar .nav-link:hover {
+  background-color: rgba(var(--primary-rgb), 0.1);
+  color: var(--primary-color);
+}
+.dashboard-sidebar .nav-link.active {
+  background-color: var(--primary-color);
+  color: #fff;
+  border-color: var(--primary-color);
+}
