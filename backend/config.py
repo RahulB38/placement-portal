@@ -2,17 +2,23 @@ import os
 from dotenv import load_dotenv
 load_dotenv()
 
+
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
-
 class Config:
-    SECRET_KEY = 'firstplace-app-secret-key'
+    
+    SECRET_KEY = os.getenv('SECRET_KEY', 'firstplace-app-secret-key')
+    SESSION_COOKIE_SECURE = True   
+    SESSION_COOKIE_HTTPONLY = True
+    SESSION_COOKIE_SAMESITE = 'None'  
+    REMEMBER_COOKIE_SECURE = True
+    REMEMBER_COOKIE_SAMESITE = 'None'
+
+    # Database
     SQLALCHEMY_DATABASE_URI = os.getenv("DATABASE_URL")
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
-    broker_url = 'redis://localhost:6379/1'
-    result_backend = 'redis://localhost:6379/2'
-
+    # Mail
     MAIL_SERVER = 'localhost'
     MAIL_PORT = 1025
     MAIL_USE_TLS = False
@@ -21,9 +27,11 @@ class Config:
     MAIL_PASSWORD = ''
     MAIL_DEFAULT_SENDER = 'officialplacement@firstplace.local'
 
-    CACHE_TYPE = 'RedisCache'
-    CACHE_REDIS_URL = 'redis://localhost:6379/0'
+    # Cache
+    CACHE_TYPE = 'SimpleCache'        # ← Use SimpleCache since no Redis on Render
     CACHE_DEFAULT_TIMEOUT = 300
 
+    # Upload
     UPLOAD_FOLDER = os.path.join(BASE_DIR, 'instance', 'uploads', 'resumes')
     MAX_CONTENT_LENGTH = 5 * 1024 * 1024
+
