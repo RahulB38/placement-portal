@@ -29,7 +29,7 @@ export default {
             const userInput = this.input;
             this.input = '';
             try {
-                const res = await fetch('/api/llm_chat', {
+                const res = await fetch(import.meta.env.VITE_API_URL + '/llm_chat', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ message: userInput })
