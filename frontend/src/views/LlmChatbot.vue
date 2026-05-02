@@ -35,6 +35,9 @@ export default {
                     body: JSON.stringify({ message: userInput })
                 });
                 const data = await res.json();
+                console.log('API response:', data)
+                console.log('Status:', res.status)
+
                 if (data.reply) {
                     this.messages.push({ role: 'bot', content: data.reply });
                 } else {
