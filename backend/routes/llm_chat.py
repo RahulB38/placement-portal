@@ -1,13 +1,13 @@
 from flask import Blueprint, request, jsonify
 import os
-from openai import OpenAI
+import requests
 from models import db, User, StudentProfile, CompanyProfile, PlacementDrive, Application
 from datetime import datetime
 
 llm_chat_bp = Blueprint('llm_chat', __name__)
 
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
-OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
+OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1/chat/completions"
 
 
 def get_database_context():
@@ -27,6 +27,7 @@ def get_database_context():
         approved_company_names = db.session.query(CompanyProfile.company_name)\
             .filter_by(approval_status='approved').all()
         company_names = ", ".join([c[0] for c in approved_company_names]) or "None"
+
         total_drives = PlacementDrive.query.count()
         active_drives = PlacementDrive.query.filter_by(status='approved')\
             .filter(PlacementDrive.application_deadline >= datetime.now()).count()
@@ -48,6 +49,7 @@ def get_database_context():
             f"  - {d.company_name} | {d.job_title} | Package: {d.package_info or 'N/A'} | Min CGPA: {d.min_cgpa} | Deadline: {d.application_deadline.strftime('%d %b %Y')}"
             for d in active_drive_list
         ]) or "  No active drives currently."
+
         total_applications = Application.query.count()
         selected_count = Application.query.filter_by(status='selected').count()
         rejected_count = Application.query.filter_by(status='rejected').count()
@@ -99,18 +101,27 @@ def llm_chat():
     try:
         db_context = get_database_context()
 
-        client = OpenAI(api_key=OPENROUTER_API_KEY, base_url=OPENROUTER_BASE_URL)
-        response = client.chat.completions.create(
-            model="openai/gpt-4o-mini",
-            messages=[
+        headers = {
+            "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+            "Content-Type": "application/json"
+        }
+
+        payload = {
+            "model": "meta-llama/llama-3.3-70b-instruct:free",
+            "messages": [
                 {"role": "system", "content": db_context},
                 {"role": "user", "content": user_message}
             ],
-            max_tokens=300,
-            temperature=0.5
-        )
-        bot_reply = response.choices[0].message.content
+            "max_tokens": 300,
+            "temperature": 0.5
+        }
+
+        response = requests.post(OPENROUTER_BASE_URL, headers=headers, json=payload)
+        response.raise_for_status()
+
+        bot_reply = response.json()['choices'][0]['message']['content']
         return jsonify({'reply': bot_reply})
+
     except Exception as e:
         print("OpenRouter API error:", e)
         return jsonify({'error': str(e)}), 500
