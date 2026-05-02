@@ -3,6 +3,7 @@ import os
 from openai import OpenAI
 from models import db, User, StudentProfile, CompanyProfile, PlacementDrive, Application
 from datetime import datetime
+import typing
 
 llm_chat_bp = Blueprint('llm_chat', __name__)
 
@@ -96,18 +97,67 @@ def llm_chat():
     try:
         db_context = get_database_context()
 
-        client = OpenAI(api_key=OPENROUTER_API_KEY, base_url=OPENROUTER_BASE_URL)
-        response = client.chat.completions.create(
-            model="openai/gpt-4o-mini",
-            messages=[
-                {"role": "system", "content": db_context},
-                {"role": "user", "content": user_message}
-            ],
-            max_tokens=300,
-            temperature=0.5
-        )
-        bot_reply = response.choices[0].message.content
-        return jsonify({'reply': bot_reply})
+        if not OPENROUTER_API_KEY:
+            return jsonify({'error': 'OPENROUTER_API_KEY not set on server'}), 500
+
+        # Try using the installed OpenAI client first. Some deployments have
+        # mismatched SDKs that reject certain kwargs (e.g. `proxies`). If the
+        # client call fails with a TypeError/AttributeError, fall back to a
+        # plain HTTP request to the OpenRouter endpoint.
+        try:
+            client = OpenAI(api_key=OPENROUTER_API_KEY, base_url=OPENROUTER_BASE_URL)
+            response = client.chat.completions.create(
+                model="openai/gpt-4o-mini",
+                messages=[
+                    {"role": "system", "content": db_context},
+                    {"role": "user", "content": user_message}
+                ],
+                max_tokens=300,
+                temperature=0.5
+            )
+            # safe access
+            bot_reply = None
+            if hasattr(response, 'choices') and len(response.choices) > 0:
+                choice = response.choices[0]
+                # some SDKs return different shapes; try multiple fallbacks
+                bot_reply = getattr(choice, 'message', None) or (choice.get('message') if isinstance(choice, dict) else None)
+                if isinstance(bot_reply, dict):
+                    bot_reply = bot_reply.get('content')
+                elif hasattr(bot_reply, 'content'):
+                    bot_reply = bot_reply.content
+            if not bot_reply:
+                # last-resort try indexing into dict-like response
+                resp_json = getattr(response, 'to_dict', None)
+                if callable(resp_json):
+                    resp_json = response.to_dict()
+                bot_reply = (resp_json or {}).get('choices', [{}])[0].get('message', {}).get('content', '')
+
+            return jsonify({'reply': bot_reply})
+        except (TypeError, AttributeError) as sdk_err:
+            # fallback to requests POST when SDK signature is incompatible
+            try:
+                import requests
+                headers = {
+                    "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+                    "Content-Type": "application/json"
+                }
+                payload = {
+                    "model": "openai/gpt-4o-mini",
+                    "messages": [
+                        {"role": "system", "content": db_context},
+                        {"role": "user", "content": user_message}
+                    ],
+                    "max_tokens": 300,
+                    "temperature": 0.5
+                }
+                r = requests.post(f"{OPENROUTER_BASE_URL}/chat/completions", json=payload, headers=headers, timeout=30)
+                r.raise_for_status()
+                data = r.json()
+                bot_reply = data.get('choices', [{}])[0].get('message', {}).get('content', '')
+                return jsonify({'reply': bot_reply})
+            except Exception as http_err:
+                print("HTTP fallback error:", http_err)
+                return jsonify({'error': str(sdk_err)}), 500
     except Exception as e:
         print("OpenRouter API error:", e)
         return jsonify({'error': str(e)}), 500
