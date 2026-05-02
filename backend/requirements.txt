@@ -10,6 +10,6 @@ email-validator>=2.1.0
 Werkzeug==3.0.1
 Flask-Caching==2.1.0
 requests==2.31.0
-#openai==1.14.3
+openai==1.14.3
 psycopg2-binary
 gunicorn
